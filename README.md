@@ -9,7 +9,7 @@ way to ensure that the SourceFile attribute is being modified to match the actua
 when you want to retain the source file information for kept classes, but remove it in all other cases. The main
 use-case for something like this is when you obfuscate a library that is consumed by others and you want to ensure
 that javadoc is accessible for the public API of the library. Most IDEs are only able to correctly link the sources
-or javadoc entries if the source file information is correct.
+or javadoc entries if the source file information is not correct.
 
 This is currently not possible with ProGuard: either rename the source file attribute of *all* classes to a fixed
 value, keep it as is or remove it completely. This small utility comes to the rescue, as it fixes the SourceFile
