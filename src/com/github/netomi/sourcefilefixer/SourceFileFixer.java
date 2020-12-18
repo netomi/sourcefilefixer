@@ -18,6 +18,7 @@ package com.github.netomi.sourcefilefixer;
 import proguard.classfile.ClassPool;
 import proguard.classfile.Clazz;
 import proguard.classfile.ProgramClass;
+import proguard.classfile.TypeConstants;
 import proguard.classfile.attribute.Attribute;
 import proguard.classfile.attribute.SourceFileAttribute;
 import proguard.classfile.attribute.visitor.AllAttributeVisitor;
@@ -29,7 +30,6 @@ import proguard.classfile.visitor.MultiClassVisitor;
 import proguard.io.*;
 
 import java.io.File;
-import java.io.IOException;
 
 public class SourceFileFixer {
 
@@ -45,10 +45,29 @@ public class SourceFileFixer {
 
             String newSourceFile;
             String shortClassName = ClassUtil.internalShortClassName(clazz.getName());
-            if (sourceFile.endsWith(".java") || sourceFile.endsWith(".kt")) {
+
+            if (sourceFile.endsWith(".java")) {
+                // java classes usually are in separate source files matching their classname.
+                // inner classes are in the same file as the outer class they belong to.
+
+                int innerClassSeparatorIndex = shortClassName.indexOf(TypeConstants.INNER_CLASS_SEPARATOR);
+                if (innerClassSeparatorIndex != -1) {
+                    shortClassName = shortClassName.substring(0, innerClassSeparatorIndex);
+                }
+
                 int suffixIndex = sourceFile.lastIndexOf('.');
                 newSourceFile = shortClassName + sourceFile.substring(suffixIndex);
+            } else if (sourceFile.endsWith(".kt")) {
+                // kotlin classes might be in totally unrelated source files.
+                // apply some simple heuristic: if the classname is <= 3 characters long,
+                // assume its obfuscated and modify the source file, otherwise leave it as is.
+                if (shortClassName.length() <= 3) {
+                    newSourceFile = shortClassName;
+                } else {
+                    newSourceFile = sourceFile;
+                }
             } else {
+                // for anything else, we just replace the source file with the obfuscated classname.
                 newSourceFile = shortClassName;
             }
 
